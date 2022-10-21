@@ -30,11 +30,13 @@ class Plugin implements PluginInterface
     {
         \Typecho\Plugin::factory('admin/footer.php')->end = __CLASS__ . '::render';
 
-        Helper::addRoute('oidc_callback', __TYPECHO_ADMIN_DIR__.'OidcLogin/callback', 'TypechoPlugin\OidcLogin\Callback', 'callback');
-        Helper::addRoute('oidc_login', __TYPECHO_ADMIN_DIR__.'OidcLogin/login', 'TypechoPlugin\OidcLogin\Callback', 'login');
+        Helper::addRoute('oidc_callback', __TYPECHO_ADMIN_DIR__ . 'OidcLogin/callback', 'TypechoPlugin\OidcLogin\Callback', 'callback');
+        Helper::addRoute('oidc_login', __TYPECHO_ADMIN_DIR__ . 'OidcLogin/login', 'TypechoPlugin\OidcLogin\Callback', 'login');
     }
 
-    public static function deactivate(){}
+    public static function deactivate()
+    {
+    }
 
     public static function config(Form $form)
     {
@@ -61,9 +63,12 @@ class Plugin implements PluginInterface
         $form->addInput($btn_name);
     }
 
-    public static function personalConfig(Form $form){}
+    public static function personalConfig(Form $form)
+    {
+    }
 
-    public static function render() {
+    public static function render()
+    {
         if (!Widget::widget('Widget_User')->hasLogin()) {
             echo '<script>
                 function add_oidc_login() {
@@ -71,7 +76,7 @@ class Plugin implements PluginInterface
                     if (forms.length < 0) return;
 
                     const link = document.createElement("button");
-                    link.innerText = "'.Helper::options()->plugin('OidcLogin')->btn_name.'";
+                    link.innerText = "' . Helper::options()->plugin('OidcLogin')->btn_name . '";
                     link.classList.add("btn", "primary");
                     link.onclick = oidc_login;
 
@@ -79,7 +84,7 @@ class Plugin implements PluginInterface
                 }
 
                 function oidc_login() {
-                    document.location = "'.Helper::options()->adminUrl.'OidcLogin/login";
+                    document.location = "' . Helper::options()->adminUrl . 'OidcLogin/login";
                 }
 
                 add_oidc_login();
