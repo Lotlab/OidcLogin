@@ -9,6 +9,7 @@ use Typecho\Widget\Helper\Form\Element\Text;
 use Typecho\Widget\Helper\Form\Element\Password;
 use Typecho\Widget\Helper\Form\Element\Checkbox;
 use Typecho\Widget\Helper\Form\Element\Radio;
+use Typecho\Widget\Helper\Layout;
 use Widget\Options;
 use Utils\Helper;
 
@@ -56,6 +57,12 @@ class Plugin implements PluginInterface
         $token_url = new Text('token_url', null, 'https://example.org/oauth/token', _t('Token URL'));
         $form->addInput($token_url);
 
+        // OpenID connect callback URL
+        $callback = new Layout('div', ['class' => 'typecho-option']);
+        $callback->addItem((new Layout('label', ['class' => 'typecho-label']))->html(_t('回调 URL')));
+        $callback->addItem((new Layout('p', ['class' => 'description']))->html(self::redirect_uri()));
+        $form->addItem($callback);
+        
         // account association
         $identity_method = new Radio('id_method', [_t('电子邮件'), _t('用户名')], 1, _t('账户关联方法'), _('根据邮件或用户名决定关联到哪个已有的账户'));
         $form->addInput($identity_method);
