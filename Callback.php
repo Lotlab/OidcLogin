@@ -92,6 +92,10 @@ class Callback extends Widget
 
     function register($user)
     {
+        if (Plugin::user()->mailExists($user['mail']) || Plugin::user()->nameExists($user['name'])) {
+            throw new Exception(_t('邮箱或用户名重复，无法创建用户'));
+        }
+
         $hasher = new PasswordHash(8, true);
         $generatedPassword = Common::randString(7);
 

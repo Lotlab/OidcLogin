@@ -20,9 +20,9 @@ if (!defined('__TYPECHO_ROOT_DIR__')) {
  * OpenID Connect 登录插件
  *
  * @package OidcLogin
- * @author jim-kirisame
- * @version 0.1.0
- * @link https://lotlab.org
+ * @author Jim Kirisame
+ * @version 0.2.0
+ * @link https://github.com/Lotlab/OidcLogin
  */
 class Plugin implements PluginInterface
 {
