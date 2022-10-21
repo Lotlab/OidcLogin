@@ -7,6 +7,7 @@ use Typecho\Common;
 use Typecho\Db;
 use Typecho\Cookie;
 use Utils\Helper;
+use Utils\PasswordHash;
 
 use Exception;
 
@@ -18,19 +19,15 @@ class Callback extends Widget
 {
     public function callback()
     {
-        if (!isset($_GET['state'])) {
-            throw new Exception(_t('invalid request'));
-        }
-
         if (isset($_GET['error'])) {
             throw new Exception($_GET['error'] . '. ' . $_GET['error_description']);
         }
 
-        if (!isset($_GET['code'])) {
+        if (!isset($_GET['code']) || !isset($_GET['state'])) {
             throw new Exception(_t('invalid request'));
         }
 
-        $options = Helper::options()->plugin('OidcLogin');
+        $options = Plugin::options();
 
         // request token
         $code = $_GET['code'];
@@ -38,7 +35,7 @@ class Callback extends Widget
             'grant_type' => 'authorization_code',
             'client_id' => $options->client_id,
             'client_secret' => $options->client_sk,
-            'redirect_uri' => $this->redirect_uri(),
+            'redirect_uri' => Plugin::redirect_uri(),
             'code' => $code
         ));
         $obj = json_decode($ret);
@@ -51,6 +48,7 @@ class Callback extends Widget
         $sub_arr = preg_split('/\./', $obj->id_token);
         $auth_obj = json_decode(base64_decode($sub_arr[1]));
 
+        // 查找用户
         $user = NULL;
         $db = Db::get();
         $method = $options->id_method;
@@ -67,42 +65,55 @@ class Callback extends Widget
                 break;
         }
 
-        // Auth success!
-        if (!empty($user)) {
-            $authCode = $this->rand_string();
-            $user['authCode'] = $authCode;
-            Cookie::set('__typecho_uid', $user['uid'], 0);
-            Cookie::set('__typecho_authCode', Common::hash($authCode), 0);
-            $db->query($db->update('table.users')->expression('logged', 'activated')->rows(['authCode' => $authCode])->where('uid = ?', $user['uid']));
+        // 用户不存在
+        if (empty($user)) {
+            if (!$options->create_user) {
+                throw new Exception(_t('用户不存在'));
+            }
 
-            $this->push($user);
-            $this->currentUser = $user;
-            $this->hasLogin = true;
+            if (!$auth_obj->email_verified) {
+                throw new Exception(_t('用户邮箱未验证'));
+            }
 
-            $this->redirect(Helper::options()->adminUrl);
-            echo 'login success!';
-            return;
+            // 注册用户
+            $user = [
+                'name' => $auth_obj->preferred_username,
+                'mail' => $auth_obj->email,
+                'screenName' => $auth_obj->name,
+                'group' => 'subscriber'
+            ];
+            $user = $this->register($user);
         }
 
-        if (!$options->create_user) {
-            throw new Exception(_t('用户不存在'));
-        }
+        Plugin::user()->simpleLogin($user['uid'], false);
+        $this->redirect(Helper::options()->adminUrl);
+        echo 'login success!';
+    }
 
-        // todo: create user
+    function register($user)
+    {
+        $hasher = new PasswordHash(8, true);
+        $generatedPassword = Common::randString(7);
 
+        $user['password'] = $hasher->hashPassword($generatedPassword);
+        $user['created'] = $this->options->time;
+        $user['screenName'] = empty($user['screenName']) ? $user['name'] : $user['screenName'];
+        $user['uid'] = Plugin::user()->insert($user);
+
+        return $user;
     }
 
     public function login()
     {
-        if (!empty($user)) {
+        if (Widget::widget('Widget_User')->hasLogin()) {
             $this->redirect(Helper::options()->adminUrl);
             return;
         }
 
-        $options = Helper::options()->plugin('OidcLogin');
+        $options = Plugin::options();
         $url = $options->authorize_url
             . '?client_id=' . $options->client_id
-            . '&redirect_uri=' . $this->redirect_uri()
+            . '&redirect_uri=' . Plugin::redirect_uri()
             . '&scope=' . $options->scope
             . '&response_type=code'
             . '&state=' . $this->rand_string();
@@ -127,13 +138,7 @@ class Callback extends Widget
         $content = curl_exec($ch);
         $header = curl_getinfo($ch);
         curl_close($ch);
-        // return array($header,$content);
         return $content;
-    }
-
-    private function redirect_uri()
-    {
-        return Helper::options()->adminUrl . 'OidcLogin/callback';
     }
 
     private function redirect($url)

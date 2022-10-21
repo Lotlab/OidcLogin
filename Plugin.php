@@ -26,6 +26,11 @@ if (!defined('__TYPECHO_ROOT_DIR__')) {
  */
 class Plugin implements PluginInterface
 {
+    public static function redirect_uri()
+    {
+        return Helper::options()->adminUrl . 'OidcLogin/callback';
+    }
+
     public static function activate()
     {
         \Typecho\Plugin::factory('admin/footer.php')->end = __CLASS__ . '::render';
@@ -69,7 +74,7 @@ class Plugin implements PluginInterface
 
     public static function render()
     {
-        if (!Widget::widget('Widget_User')->hasLogin()) {
+        if (!self::user()->hasLogin()) {
             echo '<script>
                 function add_oidc_login() {
                     const forms = document.getElementsByName("login");
@@ -90,5 +95,15 @@ class Plugin implements PluginInterface
                 add_oidc_login();
             </script>';
         }
+    }
+
+    public static function options()
+    {
+        return Helper::options()->plugin('OidcLogin');
+    }
+
+    public static function user()
+    {
+        return Widget::widget('Widget_User');
     }
 }
