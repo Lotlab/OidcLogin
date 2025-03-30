@@ -64,11 +64,11 @@ class Plugin implements PluginInterface
         $form->addItem($callback);
         
         // account association
-        $identity_method = new Radio('id_method', [_t('电子邮件'), _t('用户名')], 1, _t('账户关联方法'), _('根据邮件或用户名决定关联到哪个已有的账户'));
+        $identity_method = new Radio('id_method', [_t('电子邮件'), _t('用户名')], 1, _t('账户关联方法'), _t('根据邮件或用户名决定关联到哪个已有的账户'));
         $form->addInput($identity_method);
 
         // user creation
-        $create_user = new Radio('create_user', [_t('不创建'), _t('创建')], 0, _t('自动创建用户'), _('当用户不存在时是否要自动创建用户'));
+        $create_user = new Radio('create_user', [_t('不创建'), _t('创建')], 0, _t('自动创建用户'), _t('当用户不存在时是否要自动创建用户'));
         $form->addInput($create_user);
 
         $btn_name = new Text('btn_name', null, 'OIDC 登录', _t('按钮文本'));
