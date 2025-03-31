@@ -147,6 +147,7 @@ class Callback extends Widget
 
     private function redirect($url)
     {
+        echo '<meta http-equiv="refresh" content="1;url=' . $url . '"><a href="' . $url . '">Redirecting...</a>';
         header('Location: ' . $url, true, 307);
         exit();
     }
